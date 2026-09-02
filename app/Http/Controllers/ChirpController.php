@@ -39,17 +39,11 @@ public function index()
         ], [
             'message.required' => 'Please write something to chirp!',
             'message.max' => 'Chirps must be 255 characters or less.',
-        ]
-        );
-
-        // Create the chirp (no user for now - we'll add auth later)
-        \App\Models\Chirp::create([
-            'message' => $validated['message'],
-            'user_id' => null, // We'll add authentication in lesson 11
         ]);
 
-        // Redirect back to the feed
-        return redirect('/')->with('success', 'Chirp created!');
+        auth()->user()->chirps()->create($validated);
+
+        return redirect('/')->with('success', 'Your chirp has been posted!');
     }
 
     /**
@@ -65,6 +59,8 @@ public function index()
      */
     public function edit(Chirp $chirp)
     {
+        $this->authorize('update', $chirp);
+
         return view('chirps.edit', compact('chirp'));
     }
 
@@ -73,22 +69,21 @@ public function index()
      */
     public function update(Request $request, Chirp $chirp)
     {
-        // Validate
+        $this->authorize('update', $chirp);    
+    
         $validated = $request->validate([
             'message' => 'required|string|max:255',
         ]);
 
-        // Update
         $chirp->update($validated);
 
         return redirect('/')->with('success', 'Chirp updated!');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Chirp $chirp)
     {
+        $this->authorize('delete', $chirp);
+
         $chirp->delete();
 
         return redirect('/')->with('success', 'Chirp deleted!');
